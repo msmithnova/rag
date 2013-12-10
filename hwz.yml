@@ -1,10 +1,17 @@
+---
 scenarios:
   - &test
-    match: "false"
+    match: "Test"
 
 features:
-- &step1-1
+  - &step2-1
     FEATURE: features/test.feature
-    pass: true
-    desc: "results false"
-    
+    weight: 0.25
+    if_pass:
+      - &step2-2
+        FEATURE: features/test.feature
+        version: 10
+        weight: 0.25
+        desc: "feature = something"
+        failures:
+          - *test

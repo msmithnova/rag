@@ -23,13 +23,13 @@ class EdXClient
   class EdXClient::UnknownAssignmentPart < StandardError ; end
   class EdXClient::SpecNotFound < StandardError ; end
 
-  # Requires a file called 'autograders.yml' to exist in the current working 
+  # Requires a file called 'autograders.yml' to exist in the current working
   # directory and it must represent a hash from assignment_part_sid's to
   # spec URIs
 
   def initialize(conf_name=nil,config_path='config/conf.yml')
     conf = EdXClient.load_configurations(conf_name,config_path)
-    @endpoint = conf['queue_uri'] 
+    @endpoint = conf['queue_uri']
 
     @user_auth=conf['user_auth'].values
     @django_auth=conf['django_auth'].values
@@ -54,7 +54,7 @@ class EdXClient
       due_date =load_due_date(assignment_part_sid,part_name)
       grace_period=load_grace_period(assignment_part_sid,part_name)
       late_period=load_late_period(assignment_part_sid,part_name)
-      
+
       late_scale,late_comments=generate_late_response(submission_time,due_date,grace_period,late_period)
       logger.info "Lateness scaling factor is #{late_scale}"
       write_student_submission(user_id,submission,part_name)
@@ -72,7 +72,7 @@ class EdXClient
       end
       comments= late_comments.to_s + " " + comments.to_s
       get_checkmark=true
- 
+
       if score == 0 or score == 0.0
         get_checkmark=false
       end
@@ -86,12 +86,12 @@ class EdXClient
     raise
   end
 
-  
+
 #begin private functions
   private
   #this works for grouped assignments
   #def load_due_date(assignment_part_sid)
-  def load_due_date(assignment_part_sid, part_name=nil)  
+  def load_due_date(assignment_part_sid, part_name=nil)
     unless @autograders.include?(assignment_part_sid)
       logger.fatal "Assignment part #{assignment_part_sid} not found!"
       raise "Assignment part #{assignment_part_sid} not found!"
@@ -107,7 +107,7 @@ class EdXClient
         logger.fatal "Part name #{part_name} not found!"
         raise "Part name #{part_name} not found!"
       end
-      due = @autograders[assignment_part_sid][:parts][part_name]['due'] 
+      due = @autograders[assignment_part_sid][:parts][part_name]['due']
       #Use the queue specific due date, if no assignment specific is given
       due ||= @autograders[assignment_part_sid][:due]
     end
@@ -136,10 +136,10 @@ class EdXClient
       #Use the queue specific grace period, if no assignment specific is given
       grace ||= @autograders[assignment_part_sid][:grace_period]
     end
-    grace=grace.to_i unless grace.nil?   
+    grace=grace.to_i unless grace.nil?
     grace ||= 8 #if no grace period is found choose 1 week +24 hours
   end
-  
+
   def load_late_period(assignment_part_sid, part_name=nil)
     unless @autograders.include?(assignment_part_sid)
       logger.fatal "Assignment part #{assignment_part_sid} not found!"
@@ -160,10 +160,10 @@ class EdXClient
       #Use the queue specific late period, if no assignment specific is given
       late ||= @autograders[assignment_part_sid][:late_period]
     end
-    late=late.to_i unless late.nil?   
+    late=late.to_i unless late.nil?
     late ||= 0 #if no late period is found choose 1 week +24 hours
   end
-  
+
   def generate_late_response(received_date, due_date,grace_period,late_period=1)
     received_time=DateTime.parse(received_date.to_s)
     due_time=DateTime.parse(due_date.to_s)
@@ -171,16 +171,16 @@ class EdXClient
     lateness=lateness.to_f #we might lose some precision but oh well
     #should really be a case statement
     return [1.0, "On Time"] unless lateness > 0
-    
+
     return [0.75, "Late assignment: score scaled by .75\n"] unless lateness > grace_period
-    
+
     return [0.5, "It's less than #{grace_period + late_period} day(s) late: score scaled by: .5\n"] unless lateness > (grace_period + late_period)
-    
+
     return [0.0, "More than #{grace_period + late_period} day(s) late: no points awarded\n"]
   end
 
   def load_spec(assignment_part_sid,part_id)
-    unless @autograders.include?(assignment_part_sid) 
+    unless @autograders.include?(assignment_part_sid)
       logger.fatal "Assignment part #{assignment_part_sid} not found!"
       raise "Assignment part #{assignment_part_sid} not found!"
     end
@@ -189,9 +189,9 @@ class EdXClient
       logger.fatal "Assignment part #{part_id} not found!"
       raise "Assignment part #{part_id} not found!"
     end
-  
+
     autograder = @autograders[assignment_part_sid][:parts][part_id]#prettify later
-    
+
     return [autograder["uri"],autograder["type"]] if autograder["uri"] !~ /^http/ # Assume that if uri doesn't start with http, then it is a local file path
 
     # If not in cache, download and add to cache
@@ -237,10 +237,10 @@ class EdXClient
 
   def each_submission
     if @halt
-    #CRITICAL this does not work with halt for edX 
-    #todo fix 
+    #CRITICAL this does not work with halt for edX
+    #todo fix
     # Iterate round robin through assignment parts until all queues are empty
-    # parameterize this differently 
+    # parameterize this differently
       while @autograders.size > 0
         to_delete = []
         @autograders.keys.each do |assignment_part_sid|
@@ -256,7 +256,7 @@ class EdXClient
           @xheader = result['xqueue_header']
           @xbody = result['xqueue_body']
           @xfiles = result['xqueue_files'] #his is a url
-          
+
           yield assignment_part_sid, result[:file], result[:part_name]
         end
         @autograders.delete_if{|key,value| to_delete.include? key}
@@ -267,7 +267,7 @@ class EdXClient
     @controller.authenticate
       while continue_running_test(@controller.get_queue_length())
         all_empty = true
-        @autograders.keys.each do |assignment_part_sid|        
+        @autograders.keys.each do |assignment_part_sid|
           q_name=@autograders[assignment_part_sid][:name]
           @controller.set_queue_name(q_name)
           logger.info assignment_part_sid
@@ -308,27 +308,27 @@ class EdXClient
    # puts "dirName is #{dir_name}"
     Dir.mkdir('log/') unless File.directory?('log/')
     Dir.mkdir(dir_name) unless File.directory?(dir_name)
-   
-    submission_attempt=1    
-    file_name=user_id.to_s + "_attempt_"+submission_attempt.to_s    
+
+    submission_attempt=1
+    file_name=user_id.to_s + "_attempt_"+submission_attempt.to_s
    # puts "file_name is #{file_name}"
     file_path=File.join(dir_name,file_name)
    # puts "file_path is #{file_path}"
 
     while File.exists?(file_path)
       submission_attempt +=1
-    
-      file_name=user_id.to_s + "_attempt_"+submission_attempt.to_s    
+
+      file_name=user_id.to_s + "_attempt_"+submission_attempt.to_s
     #  puts "file_name is #{file_name}"
       file_path=File.join(dir_name,file_name)
-     # puts "file_path is #{file_path}"    
+     # puts "file_path is #{file_path}"
     end
     begin
       out=File.new(file_path,"w")
       out.write(content)
       out.flush
       out.close
-    rescue 
+    rescue
       logger.fatal "could not write submission for user= #{user_id} file_name #{file_name}"
     end
 
