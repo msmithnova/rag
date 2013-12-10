@@ -3,6 +3,8 @@ require './lib/auto_grader'
 require 'optparse'
 require './lib/graders/feature_grader/hw3_grader.rb'
 
+debugger
+
 options = {:mt => true}
 o = nil
 OptionParser.new do |opts|
